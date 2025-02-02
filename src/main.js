@@ -16,8 +16,20 @@ const loader = document.querySelector('.loader');
 const loadMoreBtn = document.querySelector('.load-more-btn');
 
 let page = 1;
-
 let searchedQuery = '';
+
+const getCardHeight = () => {
+    const card = document.querySelector('.gallery-card');
+    return card.getBoundingClientRect().height;
+};
+
+const smoothScroll = () => {
+    window.scrollBy({
+        top: getCardHeight() * 2,
+        left: 0,
+        behavior: 'smooth'
+    });
+};
 
 const onSearchFormSubmit = async event => {
     try {
@@ -35,9 +47,7 @@ const onSearchFormSubmit = async event => {
         }
 
         page = 1;
-
         loadMoreBtn.classList.add('is-hidden');
-
         loader.style.display = 'block';
         galleryEl.innerHTML = '';
 
@@ -77,7 +87,6 @@ const onSearchFormSubmit = async event => {
                 message: 'An error occurred while searching for images',
             });
         }
-
     }
     loader.style.display = 'none';
 };
@@ -102,7 +111,11 @@ const onLoadMoreBtnClick = async event => {
             loadMoreBtn.removeEventListener('click', onLoadMoreBtnClick);
         }
 
+        smoothScroll(); //Плавна прокрутка сторінки
+
     } catch (err) {
         console.log(err);
     }
 };
+
+loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
