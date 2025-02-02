@@ -152,6 +152,10 @@ body {
     background-color: #4E75FF;
 }
 
+.is-hidden {
+    display: none;
+}
+
 .gallery-link:hover .gallery-image {
     transform: scale(1.05);
     cursor: pointer;

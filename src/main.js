@@ -1,9 +1,3 @@
-// import SimpleLightbox from "simplelightbox";
-// import "simplelightbox/dist/simple-lightbox.min.css";
-
-// import iziToast from "izitoast";
-// import "izitoast/dist/css/iziToast.min.css";
-
 // вся логікa роботи додаткa
 
 import { createGalleryCardTemplate } from './js/render-functions.js';
@@ -19,13 +13,17 @@ import "izitoast/dist/css/iziToast.min.css";
 const searchFormEl = document.querySelector('.js-search-form');
 const galleryEl = document.querySelector('.js-gallery');
 const loader = document.querySelector('.loader');
+const loadMoreBtn = document.querySelector('.load-more-btn');
 
+let page = 1;
+
+let searchedQuery = '';
 
 const onSearchFormSubmit = async event => {
     try {
         event.preventDefault();
 
-        const searchedQuery = event.currentTarget.elements.text_q.value.trim();
+        searchedQuery = event.currentTarget.elements.text_q.value.trim();
         
         if (searchedQuery === '') {
             iziToast.warning({
@@ -36,10 +34,14 @@ const onSearchFormSubmit = async event => {
             return;
         }
 
+        page = 1;
+
+        loadMoreBtn.classList.add('is-hidden');
+
         loader.style.display = 'block';
         galleryEl.innerHTML = '';
 
-        const { data } = await fetchPhotosByQuery(searchedQuery);
+        const { data } = await fetchPhotosByQuery(searchedQuery, page);
 
         if (data.hits.length === 0) {
             iziToast.error({
@@ -48,7 +50,14 @@ const onSearchFormSubmit = async event => {
             galleryEl.innerHTML = '';
             searchFormEl.reset();
 
+            loader.style.display = 'none';
+
             return;
+        }
+
+        if (data.totalHits > 15) {
+            loadMoreBtn.classList.remove('is-hidden');
+            loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
         }
 
         const galleryTemplate = data.hits.map(el => createGalleryCardTemplate(el)).join('');
@@ -73,6 +82,27 @@ const onSearchFormSubmit = async event => {
     loader.style.display = 'none';
 };
 
-
-
 searchFormEl.addEventListener('submit', onSearchFormSubmit);
+
+const onLoadMoreBtnClick = async event => {
+    try {
+        page++;
+
+        const { data } = await fetchPhotosByQuery(searchedQuery, page);
+
+        const galleryTemplate = data.hits.map(el => createGalleryCardTemplate(el)).join('');
+
+        galleryEl.insertAdjacentHTML('beforeend', galleryTemplate);
+
+        if (page * 15 >= data.totalHits) {
+            iziToast.error({
+                message: "We're sorry, but you've reached the end of search results.",
+            });
+            loadMoreBtn.classList.add('is-hidden');
+            loadMoreBtn.removeEventListener('click', onLoadMoreBtnClick);
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+};
